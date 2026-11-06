@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 interface FilmProps {
@@ -168,14 +167,28 @@ books.sort((a, b) => a.name.localeCompare(b.name));
 albums.sort((a, b) => a.name.localeCompare(b.name));
 
 function Film({ src, name, year, rating }: FilmProps) {
+  function handleCardClick() {
+    console.log(`Wybrano film: ${name}`);
+  }
+
+  function handleDetailsClick(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation();
+    console.log(`Pokaż szczegóły dla ${name}`);
+  }
+
   return (
-    <div className="card h-100">
+    <div className="card h-100" onClick={handleCardClick}>
       <img src={src} alt={name} className="card-img-top" style={{ height: "400px", objectFit: "cover" }} />
       <div className="card-body">
         <h3 className="card-title">{name}</h3>
         <p className="card1">Rok: {year}</p>
         <p className="card2">Ocena: {rating}/10</p>
         {rating >= 8 && <span className="badge bg-success">Polecany</span>}
+        <div className="mt-3">
+          <button className="btn btn-primary btn-sm" onClick={handleDetailsClick}>
+            Pokaz szczegoly
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -196,6 +209,10 @@ function Ksiazka({ src, name, year, pages }: KsiazkaProps) {
 }
 
 function Album({ src, name, singer, type, year, songs }: AlbumProps) {
+  function handleSongClick(songName: string) {
+    console.log(`Wybrano utwór: ${songName} z ${name}`);
+  }
+
   return (
     <div className="card h-100">
       <img src={src} alt={name} className="card-img-top" style={{ height: "300px", objectFit: "cover" }} />
@@ -206,7 +223,7 @@ function Album({ src, name, singer, type, year, songs }: AlbumProps) {
         <p className="card3">Rok: {year}</p>
 
         {songs.length === 0 ? (
-          <div className="alert alert-warning" role="alert">Brak utworów</div>
+          <div className="alert alert-warning" role="alert">Brak utworow</div>
         ) : (
           <table className="table table-striped table-hover mt-2 align-middle">
             <thead>
@@ -218,7 +235,7 @@ function Album({ src, name, singer, type, year, songs }: AlbumProps) {
             </thead>
             <tbody>
               {songs.map((song, index) => (
-                <tr key={index}>
+                <tr key={index} onClick={() => handleSongClick(song.name)} style={{ cursor: "pointer" }}>
                   <th scope="row">{index + 1}</th>
                   <td>{song.name}</td>
                   <td className="text-end">{song.time}</td>
@@ -250,6 +267,23 @@ function Sekcja({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function App() {
+  const [movieSearch, setMovieSearch] = useState("");
+  const [bookSearch, setBookSearch] = useState("");
+  const [albumSearch, setAlbumSearch] = useState("");
+
+  const filteredMovies = movies.filter((m) =>
+    m.name.toLowerCase().includes(movieSearch.toLowerCase())
+  );
+
+  const filteredBooks = books.filter((b) =>
+    b.name.toLowerCase().includes(bookSearch.toLowerCase())
+  );
+
+  const filteredAlbums = albums.filter((a) =>
+    a.name.toLowerCase().includes(albumSearch.toLowerCase()) ||
+    a.singer.toLowerCase().includes(albumSearch.toLowerCase())
+  );
+
   const newMovies = movies.filter((m) => m.year > 2010);
   const newestBooks = [...books].sort((a, b) => b.year - a.year);
   const biggestAlbum = [...albums].sort(
@@ -259,11 +293,30 @@ function App() {
   return (
     <div className="container py-4">
       <Sekcja title="Filmy">
-        {movies.map((m) => (
-          <div key={m.name} className="col">
-            <Film {...m} />
+        <div className="col-12 mb-3">
+          <input
+            id="movie-search"
+            type="text"
+            className="form-control"
+            placeholder="Wpisz tytul"
+            value={movieSearch}
+            onChange={(e) => {
+              setMovieSearch(e.target.value);
+              console.log(e.target.value);
+            }}
+          />
+        </div>
+        {filteredMovies.length > 0 ? (
+          filteredMovies.map((m) => (
+            <div key={m.name} className="col-md-3 mb-3">
+              <Film {...m} />
+            </div>
+          ))
+        ) : (
+          <div className="col-12">
+            <p className="text-danger">Nie znaleziono filmow</p>
           </div>
-        ))}
+        )}
       </Sekcja>
 
       <Sekcja title="Filmy po 2010 roku">
@@ -274,15 +327,28 @@ function App() {
         ))}
       </Sekcja>
 
-      <Sekcja title="Książki">
-        {books.map((b) => (
+      <Sekcja title="Ksiazki">
+        <div className="col-12 mb-3">
+          <input
+            id="book-search"
+            type="text"
+            className="form-control"
+            placeholder="Wpisz tytul"
+            value={bookSearch}
+            onChange={(e) => {
+              setBookSearch(e.target.value);
+              console.log(e.target.value);
+            }}
+          />
+        </div>
+        {filteredBooks.map((b) => (
           <div key={b.name} className="col">
             <Ksiazka {...b} />
           </div>
         ))}
       </Sekcja>
 
-      <Sekcja title="Książki od najnowszej">
+      <Sekcja title="Ksiazki od najnowszej">
         {newestBooks.map((b) => (
           <div key={b.name} className="col">
             <Ksiazka {...b} />
@@ -291,14 +357,27 @@ function App() {
       </Sekcja>
 
       <Sekcja title="Albumy">
-        {albums.map((a) => (
+        <div className="col-12 mb-3">
+          <input
+            id="album-search"
+            type="text"
+            className="form-control"
+            placeholder="Wpisz tytul"
+            value={albumSearch}
+            onChange={(e) => {
+              setAlbumSearch(e.target.value);
+              console.log(e.target.value);
+            }}
+          />
+        </div>
+        {filteredAlbums.map((a) => (
           <div key={a.name} className="col">
             <Album {...a} />
           </div>
         ))}
       </Sekcja>
 
-      <Sekcja title="Album z największą liczbą utworów">
+      <Sekcja title="Album z najwieksza liczba utworow">
         <div className="col">
           <Album {...biggestAlbum} />
         </div>
